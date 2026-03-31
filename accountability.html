@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="April Challenge">
+<title>April Challenge — Bálint & Magor</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --gold: #FFD700;
+    --gold-dark: #B8860B;
+    --gold-glow: rgba(255, 215, 0, 0.4);
+    --fire: #FF4500;
+    --fire-glow: rgba(255, 69, 0, 0.3);
+    --bg-deep: #0a0008;
+    --bg-card: rgba(255, 215, 0, 0.04);
+    --bg-card-border: rgba(255, 215, 0, 0.15);
+    --text: #fff;
+    --text-dim: rgba(255, 255, 255, 0.5);
+    --success: #00ff88;
+    --success-glow: rgba(0, 255, 136, 0.3);
+    --fail: #ff2255;
+    --streak-fire: #ff6b35;
+  }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg-deep);
+    color: var(--text);
+    min-height: 100dvh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: 
+      radial-gradient(circle at 20% 50%, rgba(255, 215, 0, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 69, 0, 0.06) 0%, transparent 50%),
+      radial-gradient(circle at 50% 80%, rgba(255, 0, 100, 0.05) 0%, transparent 50%);
+    animation: bgPulse 8s ease-in-out infinite alternate;
+    z-index: 0;
+  }
+
+  @keyframes bgPulse {
+    0% { transform: scale(1) rotate(0deg); }
+    100% { transform: scale(1.1) rotate(3deg); }
+  }
+
+  .container {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px 20px 40px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ═══ HEADER ═══ */
+  .header {
+    text-align: center;
+    padding: 30px 0 20px;
+    position: relative;
+  }
+
+  .header h1 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    font-size: 42px;
+    background: linear-gradient(135deg, var(--gold), #fff, var(--gold), var(--fire));
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 3s ease-in-out infinite;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  @keyframes shimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .header .subtitle {
+    font-size: 14px;
+    color: var(--gold);
+    font-weight: 300;
+    margin-top: 6px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .header .month-badge {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 6px 20px;
+    border: 1px solid var(--gold);
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: rgba(255, 215, 0, 0.05);
+  }
+
+  /* ═══ SCOREBOARD ═══ */
+  .scoreboard {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 24px 0;
+  }
+
+  .player-card {
+    background: var(--bg-card);
+    border: 1px solid var(--bg-card-border);
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+
+  .player-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .player-card.leading::before {
+    height: 4px;
+    background: linear-gradient(90deg, transparent, var(--gold), var(--fire), var(--gold), transparent);
+    animation: borderGlow 2s ease-in-out infinite;
+  }
+
+  @keyframes borderGlow {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+  }
+
+  .player-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .player-score {
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1.1;
+    margin: 8px 0;
+  }
+
+  .player-score span {
+    font-size: 20px;
+    color: var(--text-dim);
+    font-weight: 300;
+  }
+
+  .streak-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: rgba(255, 107, 53, 0.15);
+    border: 1px solid rgba(255, 107, 53, 0.3);
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--streak-fire);
+  }
+
+  .streak-badge.dead {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-dim);
+  }
+
+  /* ═══ CALENDAR GRID ═══ */
+  .calendar-section {
+    margin: 24px 0;
+  }
+
+  .calendar-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+  }
+
+  .day-header {
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-dim);
+    padding-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .day-cell {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.02);
+    transition: all 0.2s;
+  }
+
+  .day-cell.empty {
+    border: none;
+    background: none;
+  }
+
+  .day-cell.future {
+    color: var(--text-dim);
+    opacity: 0.4;
+  }
+
+  .day-cell.today {
+    border-color: var(--gold);
+    box-shadow: 0 0 12px var(--gold-glow);
+  }
+
+  .day-cell .day-num {
+    font-size: 11px;
+    line-height: 1;
+  }
+
+  .day-cell .day-status {
+    font-size: 14px;
+    margin-top: 2px;
+  }
+
+  .day-cell.done {
+    background: rgba(0, 255, 136, 0.1);
+    border-color: rgba(0, 255, 136, 0.3);
+  }
+
+  .day-cell.missed {
+    background: rgba(255, 34, 85, 0.08);
+    border-color: rgba(255, 34, 85, 0.2);
+  }
+
+  /* ═══ LOG BUTTONS ═══ */
+  .log-section {
+    margin: 30px 0;
+    text-align: center;
+  }
+
+  .log-section h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    margin-bottom: 16px;
+    color: var(--gold);
+  }
+
+  .log-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .log-btn {
+    flex: 1;
+    max-width: 180px;
+    height: 56px;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .log-btn.yes {
+    background: linear-gradient(135deg, #00cc6a, #00ff88);
+    color: #003d20;
+    box-shadow: 0 4px 20px var(--success-glow);
+  }
+
+  .log-btn.yes:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 30px var(--success-glow);
+  }
+
+  .log-btn.no {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-dim);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .log-btn.no:hover {
+    background: rgba(255, 34, 85, 0.15);
+    border-color: var(--fail);
+    color: var(--fail);
+  }
+
+  .log-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+
+  .log-status {
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--text-dim);
+    min-height: 20px;
+  }
+
+  /* ═══ WHO IS WHO selector ═══ */
+  .who-selector {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+
+  .who-btn {
+    padding: 8px 24px;
+    border: 1px solid var(--bg-card-border);
+    background: var(--bg-card);
+    color: var(--text-dim);
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .who-btn.active {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: rgba(255, 215, 0, 0.1);
+    box-shadow: 0 0 12px var(--gold-glow);
+  }
+
+  /* ═══ CELEBRATION OVERLAY ═══ */
+  .celebration {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+  }
+
+  .celebration.active {
+    display: flex;
+  }
+
+  .celebration-content {
+    text-align: center;
+    animation: celebEnter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes celebEnter {
+    0% { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  .celebration-emoji {
+    font-size: 100px;
+    animation: celebBounce 0.6s ease-in-out infinite alternate;
+  }
+
+  @keyframes celebBounce {
+    0% { transform: translateY(0) scale(1); }
+    100% { transform: translateY(-20px) scale(1.1); }
+  }
+
+  .celebration-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--gold), #fff, var(--gold));
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 1.5s ease-in-out infinite;
+    margin: 16px 0 8px;
+  }
+
+  .celebration-sub {
+    font-size: 16px;
+    color: var(--gold);
+    font-weight: 300;
+  }
+
+  .celebration-dismiss {
+    margin-top: 30px;
+    padding: 12px 40px;
+    background: var(--gold);
+    color: #000;
+    border: none;
+    border-radius: 100px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+  }
+
+  /* ═══ CONFETTI CANVAS ═══ */
+  #confettiCanvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 1001;
+  }
+
+  /* ═══ SHAME OVERLAY ═══ */
+  .shame {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 0, 0, 0.9);
+  }
+
+  .shame.active {
+    display: flex;
+  }
+
+  .shame-content {
+    text-align: center;
+    animation: shameEnter 0.8s ease;
+  }
+
+  @keyframes shameEnter {
+    0% { transform: translateY(40px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+
+  .shame-emoji {
+    font-size: 80px;
+    animation: shameShake 0.5s ease-in-out infinite;
+  }
+
+  @keyframes shameShake {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-5deg); }
+    75% { transform: rotate(5deg); }
+  }
+
+  .shame-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--fail);
+    margin: 16px 0 8px;
+  }
+
+  .shame-sub {
+    font-size: 14px;
+    color: var(--text-dim);
+    max-width: 280px;
+    margin: 0 auto;
+    line-height: 1.5;
+  }
+
+  .shame-dismiss {
+    margin-top: 24px;
+    padding: 10px 32px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-dim);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 100px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  /* ═══ HABIT DESCRIPTION ═══ */
+  .habits-info {
+    margin: 20px 0;
+    padding: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--bg-card-border);
+    border-radius: 12px;
+  }
+
+  .habits-info .habit-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+  }
+
+  .habits-info .habit-row + .habit-row {
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .habit-row .habit-name {
+    font-weight: 600;
+    color: var(--gold);
+    font-size: 14px;
+  }
+
+  .habit-row .habit-desc {
+    font-size: 13px;
+    color: var(--text-dim);
+    font-weight: 300;
+  }
+
+  /* ═══ LOADING ═══ */
+  .loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  .loading::after {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--gold-glow);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    margin: 12px auto 0;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="confettiCanvas"></canvas>
+
+<div class="celebration" id="celebration">
+  <div class="celebration-content">
+    <div class="celebration-emoji" id="celebEmoji">🎬</div>
+    <div class="celebration-text" id="celebText">LEGENDARY!</div>
+    <div class="celebration-sub" id="celebSub">Another day conquered</div>
+    <button class="celebration-dismiss" onclick="dismissCelebration()">CONTINUE YOUR LEGACY</button>
+  </div>
+</div>
+
+<div class="shame" id="shame">
+  <div class="shame-content">
+    <div class="shame-emoji">🫠</div>
+    <div class="shame-text" id="shameText">Really?</div>
+    <div class="shame-sub" id="shameSub">Your accountability partner will be notified of this... decision.</div>
+    <button class="shame-dismiss" onclick="dismissShame()">I accept my fate</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="header">
+    <h1>The April<br>Challenge</h1>
+    <div class="subtitle">A Sacred Pact of Accountability</div>
+    <div class="month-badge">April 2026 — 30 Days — No Excuses</div>
+  </div>
+
+  <div class="habits-info">
+    <div class="habit-row">
+      <span class="habit-name">Bálint</span>
+      <span class="habit-desc">Morning & evening check-in</span>
+    </div>
+    <div class="habit-row">
+      <span class="habit-name">Magor</span>
+      <span class="habit-desc">TBD</span>
+    </div>
+  </div>
+
+  <div class="scoreboard">
+    <div class="player-card" id="card-balint">
+      <div class="player-name">Bálint</div>
+      <div class="player-score" id="score-balint">0<span>/30</span></div>
+      <div class="streak-badge dead" id="streak-balint">🔥 0 streak</div>
+    </div>
+    <div class="player-card" id="card-magor">
+      <div class="player-name">Magor</div>
+      <div class="player-score" id="score-magor">0<span>/30</span></div>
+      <div class="streak-badge dead" id="streak-magor">🔥 0 streak</div>
+    </div>
+  </div>
+
+  <div class="log-section">
+    <h3>Log Today</h3>
+    <div class="who-selector">
+      <button class="who-btn active" id="who-balint" onclick="selectWho('balint')">Bálint</button>
+      <button class="who-btn" id="who-magor" onclick="selectWho('magor')">Magor</button>
+    </div>
+    <div class="log-buttons">
+      <button class="log-btn yes" id="btnYes" onclick="logDay(true)">CRUSHED IT 💪</button>
+      <button class="log-btn no" id="btnNo" onclick="logDay(false)">Missed it 😔</button>
+    </div>
+    <div class="log-status" id="logStatus"></div>
+  </div>
+
+  <div class="calendar-section">
+    <div class="calendar-label">
+      <span>Bálint — April 2026</span>
+      <span id="pct-balint">0%</span>
+    </div>
+    <div class="calendar-grid" id="cal-balint"></div>
+  </div>
+
+  <div class="calendar-section">
+    <div class="calendar-label">
+      <span>Magor — April 2026</span>
+      <span id="pct-magor">0%</span>
+    </div>
+    <div class="calendar-grid" id="cal-magor"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════ CONFIG ═══════════════
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPgLM6WkY6ppXk5y-IsLIsIpDe57aIuurKicVDDr8r-ZqVhHPzghANT3RTNU1xQ1qu/exec";
+
+// ═══════════════ STATE ═══════════════
+let selectedWho = 'balint';
+let data = { balint: {}, magor: {} };
+
+const CELEBRATIONS = [
+  { emoji: '🎬', text: 'BLOCKBUSTER!', sub: 'This performance deserves an Oscar' },
+  { emoji: '🕺', text: 'LEGENDARY!', sub: 'The crowd goes absolutely wild' },
+  { emoji: '🏆', text: 'CHAMPION!', sub: 'Discipline is your middle name' },
+  { emoji: '💎', text: 'FLAWLESS!', sub: 'Consistency is the real flex' },
+  { emoji: '🔥', text: 'ON FIRE!', sub: 'Someone call the fire department' },
+  { emoji: '⚡', text: 'UNSTOPPABLE!', sub: 'Nothing can stand in your way' },
+  { emoji: '🎯', text: 'BULLSEYE!', sub: 'Precision. Dedication. Perfection.' },
+  { emoji: '🚀', text: 'LIFTOFF!', sub: 'Houston, we have a winner' },
+  { emoji: '👑', text: 'ROYALTY!', sub: 'Bow before the king of habits' },
+  { emoji: '🌟', text: 'SUPERSTAR!', sub: 'Bollywood called, they want you' },
+];
+
+const SHAMES = [
+  { text: 'Really?', sub: 'Your partner will see this. Just saying.' },
+  { text: 'Interesting choice.', sub: 'The streak... it had a family.' },
+  { text: 'Bold move.', sub: 'Choosing chaos today, are we?' },
+  { text: 'Noted.', sub: 'This will be remembered.' },
+  { text: 'Ooof.', sub: 'Tomorrow is another day. Allegedly.' },
+];
+
+// ═══════════════ INIT ═══════════════
+function init() {
+  // Load from localStorage first (instant), then sync from server
+  loadLocal();
+  buildCalendars();
+  updateScores();
+  checkTodayLogged();
+  // Fetch fresh data from server
+  fetchFromServer();
+}
+
+// ═══════════════ DATA ═══════════════
+function loadLocal() {
+  try {
+    const saved = localStorage.getItem('april_challenge_data');
+    if (saved) data = JSON.parse(saved);
+  } catch(e) {}
+}
+
+function saveLocal() {
+  localStorage.setItem('april_challenge_data', JSON.stringify(data));
+}
+
+function fetchFromServer() {
+  if (SCRIPT_URL === "https://script.google.com/macros/s/AKfycbxPgLM6WkY6ppXk5y-IsLIsIpDe57aIuurKicVDDr8r-ZqVhHPzghANT3RTNU1xQ1qu/exec") return;
+
+  // Use JSONP-style approach: create a script tag that calls a callback
+  // Actually, since Apps Script supports CORS on GET for web apps deployed as "Anyone",
+  // we'll try fetch first, fall back to what we have
+  fetch(`${SCRIPT_URL}?action=get_all`)
+    .then(r => r.json())
+    .then(serverData => {
+      if (serverData.status === 'ok') {
+        // Merge server data (server wins for conflicts)
+        if (serverData.balint) {
+          Object.keys(serverData.balint).forEach(k => {
+            data.balint[k] = serverData.balint[k];
+          });
+        }
+        if (serverData.magor) {
+          Object.keys(serverData.magor).forEach(k => {
+            data.magor[k] = serverData.magor[k];
+          });
+        }
+        saveLocal();
+        buildCalendars();
+        updateScores();
+        checkTodayLogged();
+      }
+    })
+    .catch(err => {
+      console.log('Could not fetch from server, using local data', err);
+    });
+}
+
+function pushToServer(who, done) {
+  if (SCRIPT_URL === "https://script.google.com/macros/s/AKfycbxPgLM6WkY6ppXk5y-IsLIsIpDe57aIuurKicVDDr8r-ZqVhHPzghANT3RTNU1xQ1qu/exec") return;
+
+  const params = new URLSearchParams({
+    action: 'log',
+    who: who,
+    done: done ? 'yes' : 'no'
+  });
+
+  // Use iframe for CORS-safe submission (works from file:// and GitHub Pages)
+  const iframe = document.createElement('iframe');
+  iframe.style.display = 'none';
+  iframe.src = `${SCRIPT_URL}?${params.toString()}`;
+  document.body.appendChild(iframe);
+  setTimeout(() => { try { document.body.removeChild(iframe); } catch(e) {} }, 5000);
+}
+
+// ═══════════════ CALENDAR ═══════════════
+function buildCalendars() {
+  buildCalendar('balint');
+  buildCalendar('magor');
+}
+
+function buildCalendar(who) {
+  const grid = document.getElementById(`cal-${who}`);
+  grid.innerHTML = '';
+
+  // Day headers
+  const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  days.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'day-header';
+    el.textContent = d;
+    grid.appendChild(el);
+  });
+
+  // April 2026 starts on Wednesday (day index 3, Mon=0)
+  const startDay = 2; // Wednesday = index 2 (Mon=0)
+  const daysInMonth = 30;
+  const today = new Date();
+  const todayDate = today.getDate();
+  const isApril = today.getMonth() === 3 && today.getFullYear() === 2026;
+
+  // Empty cells before April 1
+  for (let i = 0; i < startDay; i++) {
+    const el = document.createElement('div');
+    el.className = 'day-cell empty';
+    grid.appendChild(el);
+  }
+
+  // Day cells
+  for (let d = 1; d <= daysInMonth; d++) {
+    const el = document.createElement('div');
+    const key = d.toString();
+    const isFuture = !isApril || d > todayDate;
+    const isToday = isApril && d === todayDate;
+    const status = data[who][key];
+
+    let cls = 'day-cell';
+    if (isToday) cls += ' today';
+    if (isFuture && !isToday) cls += ' future';
+    if (status === true) cls += ' done';
+    if (status === false) cls += ' missed';
+
+    el.className = cls;
+    el.innerHTML = `
+      <span class="day-num">${d}</span>
+      <span class="day-status">${status === true ? '✓' : status === false ? '✗' : ''}</span>
+    `;
+    grid.appendChild(el);
+  }
+}
+
+// ═══════════════ SCORES ═══════════════
+function updateScores() {
+  ['balint', 'magor'].forEach(who => {
+    const entries = Object.values(data[who]);
+    const done = entries.filter(v => v === true).length;
+    const total = entries.length;
+
+    document.getElementById(`score-${who}`).innerHTML = `${done}<span>/30</span>`;
+
+    // Percentage
+    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+    document.getElementById(`pct-${who}`).textContent = `${pct}%`;
+
+    // Streak
+    const streak = calcStreak(who);
+    const streakEl = document.getElementById(`streak-${who}`);
+    streakEl.textContent = `🔥 ${streak} streak`;
+    streakEl.className = streak > 0 ? 'streak-badge' : 'streak-badge dead';
+
+    // Leading indicator
+    const otherWho = who === 'balint' ? 'magor' : 'balint';
+    const otherDone = Object.values(data[otherWho]).filter(v => v === true).length;
+    const card = document.getElementById(`card-${who}`);
+    card.classList.toggle('leading', done > otherDone && done > 0);
+  });
+}
+
+function calcStreak(who) {
+  const today = new Date();
+  const isApril = today.getMonth() === 3 && today.getFullYear() === 2026;
+  if (!isApril) return 0;
+
+  let streak = 0;
+  let d = today.getDate();
+
+  // If today isn't logged yet, start from yesterday
+  if (data[who][d.toString()] === undefined) d--;
+
+  while (d >= 1 && data[who][d.toString()] === true) {
+    streak++;
+    d--;
+  }
+  return streak;
+}
+
+// ═══════════════ LOG ═══════════════
+function selectWho(who) {
+  selectedWho = who;
+  document.querySelectorAll('.who-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`who-${who}`).classList.add('active');
+  checkTodayLogged();
+}
+
+function checkTodayLogged() {
+  const today = new Date();
+  const isApril = today.getMonth() === 3 && today.getFullYear() === 2026;
+  const key = today.getDate().toString();
+  const logged = isApril && data[selectedWho][key] !== undefined;
+
+  document.getElementById('btnYes').disabled = logged;
+  document.getElementById('btnNo').disabled = logged;
+  document.getElementById('logStatus').textContent = logged ?
+    `Already logged for today (${data[selectedWho][key] ? '✓ done' : '✗ missed'})` : '';
+}
+
+function logDay(done) {
+  const today = new Date();
+  const key = today.getDate().toString();
+
+  data[selectedWho][key] = done;
+  saveLocal();
+  pushToServer(selectedWho, done);
+  buildCalendars();
+  updateScores();
+  checkTodayLogged();
+
+  if (done) {
+    showCelebration();
+  } else {
+    showShame();
+  }
+}
+
+// ═══════════════ CELEBRATION ═══════════════
+function showCelebration() {
+  const c = CELEBRATIONS[Math.floor(Math.random() * CELEBRATIONS.length)];
+  document.getElementById('celebEmoji').textContent = c.emoji;
+  document.getElementById('celebText').textContent = c.text;
+  document.getElementById('celebSub').textContent = c.sub;
+  document.getElementById('celebration').classList.add('active');
+  launchConfetti();
+}
+
+function dismissCelebration() {
+  document.getElementById('celebration').classList.remove('active');
+}
+
+function showShame() {
+  const s = SHAMES[Math.floor(Math.random() * SHAMES.length)];
+  document.getElementById('shameText').textContent = s.text;
+  document.getElementById('shameSub').textContent = s.sub;
+  document.getElementById('shame').classList.add('active');
+}
+
+function dismissShame() {
+  document.getElementById('shame').classList.remove('active');
+}
+
+// ═══════════════ CONFETTI ═══════════════
+function launchConfetti() {
+  const canvas = document.getElementById('confettiCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const colors = ['#FFD700', '#FF4500', '#00ff88', '#ff2255', '#fff', '#FF69B4', '#00CED1'];
+  const particles = [];
+
+  for (let i = 0; i < 150; i++) {
+    particles.push({
+      x: canvas.width / 2 + (Math.random() - 0.5) * 200,
+      y: canvas.height / 2,
+      vx: (Math.random() - 0.5) * 20,
+      vy: (Math.random() - 1) * 18 - 5,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      size: Math.random() * 8 + 3,
+      rotation: Math.random() * 360,
+      rotSpeed: (Math.random() - 0.5) * 10,
+      gravity: 0.3 + Math.random() * 0.2,
+      opacity: 1,
+      shape: Math.random() > 0.5 ? 'rect' : 'circle'
+    });
+  }
+
+  let frame = 0;
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let alive = false;
+
+    particles.forEach(p => {
+      if (p.opacity <= 0) return;
+      alive = true;
+
+      p.x += p.vx;
+      p.vy += p.gravity;
+      p.y += p.vy;
+      p.vx *= 0.98;
+      p.rotation += p.rotSpeed;
+
+      if (frame > 40) p.opacity -= 0.015;
+
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation * Math.PI / 180);
+      ctx.globalAlpha = Math.max(0, p.opacity);
+      ctx.fillStyle = p.color;
+
+      if (p.shape === 'rect') {
+        ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+      } else {
+        ctx.beginPath();
+        ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    });
+
+    frame++;
+    if (alive && frame < 200) {
+      requestAnimationFrame(animate);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  animate();
+}
+
+// ═══════════════ START ═══════════════
+init();
+</script>
+</body>
+</html>
