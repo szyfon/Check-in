@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Check-in">
+<title>Daily Check-in</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0e0e10;
+    --surface: #18181b;
+    --surface-hover: #1f1f23;
+    --border: #27272a;
+    --border-focus: #52525b;
+    --text: #fafafa;
+    --text-mid: #a1a1aa;
+    --text-dim: #71717a;
+    --accent: #e4e4e7;
+    --accent-bright: #ffffff;
+    --success: #22c55e;
+    --success-dim: #166534;
+    --active-pill: #fafafa;
+    --active-pill-text: #09090b;
+    --yn-yes: #22c55e;
+    --yn-yes-bg: rgba(34, 197, 94, 0.12);
+    --yn-no: #ef4444;
+    --yn-no-bg: rgba(239, 68, 68, 0.08);
+  }
+
+  body {
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 20px 100px;
+  }
+
+  /* Header */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
+    padding: 20px 0 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 16px;
+  }
+
+  .header h1 {
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+
+  .header .date {
+    font-size: 13px;
+    color: var(--text-dim);
+    font-weight: 300;
+  }
+
+  /* Tab switcher */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 3px;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 8px 0;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-dim);
+    border: none;
+    background: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tab.active {
+    background: var(--active-pill);
+    color: var(--active-pill-text);
+    font-weight: 500;
+  }
+
+  /* Form sections */
+  .form-section {
+    display: none;
+  }
+
+  .form-section.active {
+    display: block;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin: 28px 0 12px;
+  }
+
+  .section-label:first-child {
+    margin-top: 4px;
+  }
+
+  /* Question blocks */
+  .q {
+    margin-bottom: 20px;
+  }
+
+  .q label {
+    display: block;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-mid);
+    margin-bottom: 8px;
+  }
+
+  /* Scale inputs (1-5, 1-7) */
+  .scale {
+    display: flex;
+    gap: 6px;
+  }
+
+  .scale button {
+    flex: 1;
+    height: 40px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 400;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .scale button:hover {
+    border-color: var(--border-focus);
+    color: var(--text-mid);
+  }
+
+  .scale button.selected {
+    background: var(--active-pill);
+    color: var(--active-pill-text);
+    border-color: var(--active-pill);
+    font-weight: 500;
+  }
+
+  /* Time inputs */
+  input[type="time"],
+  input[type="number"],
+  input[type="text"],
+  textarea {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input:focus, textarea:focus {
+    border-color: var(--border-focus);
+  }
+
+  input[type="number"] {
+    width: 80px;
+  }
+
+  textarea {
+    height: 72px;
+    padding: 10px 12px;
+    resize: none;
+    line-height: 1.5;
+  }
+
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.7);
+  }
+
+  /* Y/N toggle */
+  .yn {
+    display: flex;
+    gap: 6px;
+  }
+
+  .yn button {
+    flex: 1;
+    height: 40px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 400;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .yn button:hover {
+    border-color: var(--border-focus);
+  }
+
+  .yn button.selected-yes {
+    background: var(--yn-yes-bg);
+    color: var(--yn-yes);
+    border-color: var(--yn-yes);
+    font-weight: 500;
+  }
+
+  .yn button.selected-no {
+    background: var(--yn-no-bg);
+    color: var(--yn-no);
+    border-color: var(--yn-no);
+    font-weight: 500;
+  }
+
+  /* Multi-choice (exercise, nicotine) */
+  .pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .pills button {
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 400;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .pills button:hover {
+    border-color: var(--border-focus);
+  }
+
+  .pills button.selected {
+    background: var(--active-pill);
+    color: var(--active-pill-text);
+    border-color: var(--active-pill);
+    font-weight: 500;
+  }
+
+  /* Meal checkboxes */
+  .meals {
+    display: flex;
+    gap: 6px;
+  }
+
+  .meals button {
+    flex: 1;
+    height: 40px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 400;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .meals button.selected {
+    background: var(--yn-yes-bg);
+    color: var(--yn-yes);
+    border-color: var(--yn-yes);
+    font-weight: 500;
+  }
+
+  /* Submit */
+  .submit-area {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 16px 20px;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+    background: linear-gradient(to top, var(--bg) 60%, transparent);
+  }
+
+  .submit-btn {
+    display: block;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    height: 48px;
+    border: none;
+    border-radius: 10px;
+    background: var(--accent);
+    color: var(--active-pill-text);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .submit-btn:hover {
+    background: var(--accent-bright);
+  }
+
+  .submit-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .submit-btn.success {
+    background: var(--success);
+    color: white;
+  }
+
+  /* Status message */
+  .status {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 8px;
+    min-height: 20px;
+  }
+
+  .status.error {
+    color: var(--yn-no);
+  }
+
+  /* Inline row for compact items */
+  .row {
+    display: flex;
+    gap: 12px;
+  }
+
+  .row .q {
+    flex: 1;
+  }
+
+  /* No crash option for crash time */
+  .crash-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .crash-row input[type="time"] {
+    flex: 1;
+  }
+
+  .crash-row button {
+    height: 40px;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 13px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .crash-row button.selected {
+    background: var(--active-pill);
+    color: var(--active-pill-text);
+    border-color: var(--active-pill);
+    font-weight: 500;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- CONFIG: Replace with your Apps Script URL -->
+<!-- ═══════════════════════════════════════ -->
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx-YcNST85IgStuLYGfpvCqadKb2SU9lmM7r0PZj7tF-w0R4FO9mmvYN2FgOVqK_tw4/exec";
+</script>
+
+<div class="container">
+  <div class="header">
+    <div class="header-top">
+      <h1>Check-in</h1>
+      <span class="date" id="dateDisplay"></span>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('morning')">Morning</button>
+      <button class="tab" onclick="switchTab('evening')">Evening</button>
+    </div>
+  </div>
+
+  <!-- ==================== MORNING ==================== -->
+  <div class="form-section active" id="morning">
+
+    <div class="section-label">Sleep</div>
+
+    <div class="row">
+      <div class="q">
+        <label>Fell asleep at</label>
+        <input type="time" id="m_sleep_time">
+      </div>
+      <div class="q">
+        <label>Woke up at</label>
+        <input type="time" id="m_wake_time">
+      </div>
+    </div>
+
+    <div class="q">
+      <label>Sleep quality</label>
+      <div class="scale" data-field="m_sleep_quality" data-max="5"></div>
+    </div>
+
+    <div class="q">
+      <label>Time to fall asleep</label>
+      <div class="scale" data-field="m_time_to_sleep" data-max="5"></div>
+    </div>
+
+    <div class="section-label">State</div>
+
+    <div class="q">
+      <label>Energy</label>
+      <div class="scale" data-field="m_energy" data-max="5"></div>
+    </div>
+
+    <div class="q">
+      <label>Mood</label>
+      <div class="scale" data-field="m_mood" data-max="5"></div>
+    </div>
+
+    <div class="q">
+      <label>Motivation</label>
+      <div class="scale" data-field="m_motivation" data-max="5"></div>
+    </div>
+
+    <div class="section-label">Medication</div>
+
+    <div class="q">
+      <label>Livizux taken at</label>
+      <input type="time" id="m_livizux_at">
+    </div>
+
+    <div class="section-label">Morning actions</div>
+
+    <div class="q">
+      <label>Replied to pending messages</label>
+      <div class="yn" data-field="m_messages_replied"></div>
+    </div>
+
+    <div class="q">
+      <label>Tasks organized</label>
+      <div class="yn" data-field="m_tasks_organized"></div>
+    </div>
+
+    <div class="q">
+      <label>ONE thing that would make today a win</label>
+      <textarea id="m_one_thing" placeholder="Be specific..."></textarea>
+    </div>
+  </div>
+
+  <!-- ==================== EVENING ==================== -->
+  <div class="form-section" id="evening">
+
+    <div class="section-label">Medication</div>
+
+    <div class="q">
+      <label>Medication effectiveness</label>
+      <div class="scale" data-field="e_med_effectiveness" data-max="5"></div>
+    </div>
+
+    <div class="q">
+      <label>Medication crash time</label>
+      <div class="crash-row">
+        <input type="time" id="e_crash_time">
+        <button id="e_no_crash" onclick="toggleNoCrash()">No crash</button>
+      </div>
+    </div>
+
+    <div class="section-label">Performance</div>
+
+    <div class="q">
+      <label>Productivity outside work</label>
+      <div class="scale" data-field="e_productivity" data-max="5"></div>
+    </div>
+
+    <div class="q">
+      <label>Impulse control</label>
+      <div class="scale" data-field="e_impulse_control" data-max="5"></div>
+    </div>
+
+    <div class="section-label">Wellbeing</div>
+
+    <div class="q">
+      <label>Mood</label>
+      <div class="scale" data-field="e_mood" data-max="5"></div>
+    </div>
+
+    <div class="q">
+      <label>Stress</label>
+      <div class="scale" data-field="e_stress" data-max="5"></div>
+    </div>
+
+    <div class="q">
+      <label>Daytime sleepiness</label>
+      <div class="scale" data-field="e_sleepiness" data-max="5"></div>
+    </div>
+
+    <div class="section-label">Activity</div>
+
+    <div class="q">
+      <label>Worked today</label>
+      <div class="yn" data-field="e_worked"></div>
+    </div>
+
+    <div class="q">
+      <label>Exercise</label>
+      <div class="pills" data-field="e_exercise">
+        <button data-val="none">None</button>
+        <button data-val="cardio">Cardio</button>
+        <button data-val="strength">Strength</button>
+        <button data-val="both">Both</button>
+      </div>
+    </div>
+
+    <div class="section-label">Intake</div>
+
+    <div class="q">
+      <label>Meals</label>
+      <div class="meals" data-field="e_meals">
+        <button data-val="breakfast">Breakfast</button>
+        <button data-val="lunch">Lunch</button>
+        <button data-val="dinner">Dinner</button>
+      </div>
+    </div>
+
+    <div class="q">
+      <label>Water adequate</label>
+      <div class="yn" data-field="e_water"></div>
+    </div>
+
+    <div class="row">
+      <div class="q">
+        <label>Caffeine (cups)</label>
+        <input type="number" id="e_caffeine" min="0" max="20" value="0">
+      </div>
+      <div class="q">
+        <label>Last caffeine at</label>
+        <input type="time" id="e_last_caffeine">
+      </div>
+    </div>
+
+    <div class="q">
+      <label>Nicotine</label>
+      <div class="pills" data-field="e_nicotine">
+        <button data-val="none">None</button>
+        <button data-val="light">Light</button>
+        <button data-val="moderate">Moderate</button>
+        <button data-val="heavy">Heavy</button>
+      </div>
+    </div>
+
+    <div class="q">
+      <label>Alcohol (drinks)</label>
+      <input type="number" id="e_alcohol" min="0" max="30" value="0">
+    </div>
+
+    <div class="section-label">End of day</div>
+
+    <div class="q">
+      <label>Room tidied</label>
+      <div class="yn" data-field="e_room_tidied"></div>
+    </div>
+
+    <div class="q">
+      <label>ONE thing completed</label>
+      <div class="yn" data-field="e_one_thing_done"></div>
+    </div>
+
+    <div class="q">
+      <label>Day in one sentence</label>
+      <textarea id="e_day_summary" placeholder="How was today?"></textarea>
+    </div>
+
+    <div class="q">
+      <label>Intended bedtime</label>
+      <input type="time" id="e_intended_bedtime">
+    </div>
+
+    <div class="q">
+      <label>Phone out of reach for bed</label>
+      <div class="yn" data-field="e_phone_away"></div>
+    </div>
+  </div>
+</div>
+
+<div class="submit-area">
+  <button class="submit-btn" id="submitBtn" onclick="submit()">Submit</button>
+  <div class="status" id="statusMsg"></div>
+</div>
+
+<script>
+  // ═══════════════ STATE ═══════════════
+  let currentTab = "morning";
+  const state = {};
+
+  // ═══════════════ INIT ═══════════════
+  function init() {
+    const now = new Date();
+    const opts = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+    document.getElementById('dateDisplay').textContent = now.toLocaleDateString('en-GB', opts);
+
+    // Auto-select tab based on time of day
+    const hour = now.getHours();
+    if (hour >= 17) switchTab('evening');
+
+    buildScales();
+    buildYN();
+    buildPills();
+    buildMeals();
+  }
+
+  // ═══════════════ TABS ═══════════════
+  function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+
+    if (tab === 'morning') {
+      document.querySelectorAll('.tab')[0].classList.add('active');
+      document.getElementById('morning').classList.add('active');
+    } else {
+      document.querySelectorAll('.tab')[1].classList.add('active');
+      document.getElementById('evening').classList.add('active');
+    }
+
+    document.getElementById('submitBtn').className = 'submit-btn';
+    document.getElementById('statusMsg').textContent = '';
+  }
+
+  // ═══════════════ SCALE BUTTONS ═══════════════
+  function buildScales() {
+    document.querySelectorAll('.scale').forEach(container => {
+      const field = container.dataset.field;
+      const max = parseInt(container.dataset.max);
+      for (let i = 1; i <= max; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        btn.onclick = () => selectScale(field, i, container);
+        container.appendChild(btn);
+      }
+    });
+  }
+
+  function selectScale(field, val, container) {
+    state[field] = val;
+    container.querySelectorAll('button').forEach((btn, idx) => {
+      btn.classList.toggle('selected', idx + 1 === val);
+    });
+  }
+
+  // ═══════════════ Y/N BUTTONS ═══════════════
+  function buildYN() {
+    document.querySelectorAll('.yn').forEach(container => {
+      const field = container.dataset.field;
+      const yBtn = document.createElement('button');
+      yBtn.textContent = 'Yes';
+      yBtn.onclick = () => selectYN(field, 'y', container);
+
+      const nBtn = document.createElement('button');
+      nBtn.textContent = 'No';
+      nBtn.onclick = () => selectYN(field, 'n', container);
+
+      container.appendChild(yBtn);
+      container.appendChild(nBtn);
+    });
+  }
+
+  function selectYN(field, val, container) {
+    state[field] = val;
+    const btns = container.querySelectorAll('button');
+    btns[0].className = val === 'y' ? 'selected-yes' : '';
+    btns[1].className = val === 'n' ? 'selected-no' : '';
+  }
+
+  // ═══════════════ PILLS (single select) ═══════════════
+  function buildPills() {
+    document.querySelectorAll('.pills').forEach(container => {
+      const field = container.dataset.field;
+      container.querySelectorAll('button').forEach(btn => {
+        btn.onclick = () => {
+          state[field] = btn.dataset.val;
+          container.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+        };
+      });
+    });
+  }
+
+  // ═══════════════ MEALS (multi select) ═══════════════
+  function buildMeals() {
+    document.querySelectorAll('.meals').forEach(container => {
+      if (!state['e_meals']) state['e_meals'] = {};
+      container.querySelectorAll('button').forEach(btn => {
+        btn.onclick = () => {
+          const meal = btn.dataset.val;
+          state['e_meals'][meal] = !state['e_meals'][meal];
+          btn.classList.toggle('selected', state['e_meals'][meal]);
+        };
+      });
+    });
+  }
+
+  // ═══════════════ NO CRASH TOGGLE ═══════════════
+  function toggleNoCrash() {
+    const btn = document.getElementById('e_no_crash');
+    const input = document.getElementById('e_crash_time');
+    if (btn.classList.contains('selected')) {
+      btn.classList.remove('selected');
+      state['e_no_crash'] = false;
+      input.disabled = false;
+      input.style.opacity = '1';
+    } else {
+      btn.classList.add('selected');
+      state['e_no_crash'] = true;
+      input.value = '';
+      input.disabled = true;
+      input.style.opacity = '0.3';
+    }
+  }
+
+  // ═══════════════ SUBMIT (iframe method for local file compatibility) ═══════════════
+  function submit() {
+    const btn = document.getElementById('submitBtn');
+    const status = document.getElementById('statusMsg');
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    status.textContent = '';
+    status.className = 'status';
+
+    let params;
+
+    if (currentTab === 'morning') {
+      params = new URLSearchParams({
+        action: 'submit_morning',
+        sleep_time: document.getElementById('m_sleep_time').value || '',
+        wake_time: document.getElementById('m_wake_time').value || '',
+        sleep_quality: state['m_sleep_quality'] || '',
+        time_to_sleep: state['m_time_to_sleep'] || '',
+        energy: state['m_energy'] || '',
+        mood: state['m_mood'] || '',
+        motivation: state['m_motivation'] || '',
+        livizux_at: document.getElementById('m_livizux_at').value || '',
+        messages_replied: state['m_messages_replied'] || '',
+        tasks_organized: state['m_tasks_organized'] || '',
+        one_thing: document.getElementById('m_one_thing').value || ''
+      });
+    } else {
+      const meals = state['e_meals'] || {};
+      const crashTime = state['e_no_crash'] ? 'No crash' : (document.getElementById('e_crash_time').value || '');
+
+      params = new URLSearchParams({
+        action: 'submit_evening',
+        med_effectiveness: state['e_med_effectiveness'] || '',
+        crash_time: crashTime,
+        productivity: state['e_productivity'] || '',
+        impulse_control: state['e_impulse_control'] || '',
+        mood: state['e_mood'] || '',
+        stress: state['e_stress'] || '',
+        sleepiness: state['e_sleepiness'] || '',
+        worked: state['e_worked'] || '',
+        exercise: state['e_exercise'] || '',
+        breakfast: meals['breakfast'] ? 'y' : 'n',
+        lunch: meals['lunch'] ? 'y' : 'n',
+        dinner: meals['dinner'] ? 'y' : 'n',
+        water: state['e_water'] || '',
+        caffeine: document.getElementById('e_caffeine').value || '0',
+        last_caffeine: document.getElementById('e_last_caffeine').value || '',
+        nicotine: state['e_nicotine'] || '',
+        alcohol: document.getElementById('e_alcohol').value || '0',
+        room_tidied: state['e_room_tidied'] || '',
+        one_thing_done: state['e_one_thing_done'] || '',
+        day_summary: document.getElementById('e_day_summary').value || '',
+        intended_bedtime: document.getElementById('e_intended_bedtime').value || '',
+        phone_away: state['e_phone_away'] || ''
+      });
+    }
+
+    // Use a hidden iframe to avoid CORS issues with file:// origin
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.name = 'submitFrame_' + Date.now();
+    document.body.appendChild(iframe);
+
+    // Timeout: assume success after 4 seconds (we can't read the iframe response cross-origin)
+    const timeout = setTimeout(() => {
+      btn.textContent = 'Done ✓';
+      btn.className = 'submit-btn success';
+      status.textContent = `${currentTab === 'morning' ? 'Morning' : 'Evening'} check-in saved`;
+      try { document.body.removeChild(iframe); } catch(e) {}
+    }, 4000);
+
+    iframe.onerror = () => {
+      clearTimeout(timeout);
+      btn.textContent = 'Submit';
+      btn.disabled = false;
+      status.textContent = 'Failed to save. Check your connection.';
+      status.className = 'status error';
+      try { document.body.removeChild(iframe); } catch(e) {}
+    };
+
+    // Navigate the iframe to the script URL with params (this is a simple GET, no CORS)
+    iframe.src = `${SCRIPT_URL}?${params.toString()}`;
+  }
+
+  init();
+</script>
+</body>
+</html>
