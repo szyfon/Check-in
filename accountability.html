@@ -687,56 +687,32 @@ const SHAMES = [
 
 // ═══════════════ INIT ═══════════════
 function init() {
-  // Load from localStorage first (instant), then sync from server
-  loadLocal();
+  // Clear any old localStorage data
+  localStorage.removeItem('april_challenge_data');
+  // Show loading state, then fetch from server
   buildCalendars();
   updateScores();
   checkTodayLogged();
-  // Fetch fresh data from server
   fetchFromServer();
 }
 
 // ═══════════════ DATA ═══════════════
-function loadLocal() {
-  try {
-    const saved = localStorage.getItem('april_challenge_data');
-    if (saved) data = JSON.parse(saved);
-  } catch(e) {}
-}
-
-function saveLocal() {
-  localStorage.setItem('april_challenge_data', JSON.stringify(data));
-}
-
 function fetchFromServer() {
   if (SCRIPT_URL === "https://script.google.com/macros/s/AKfycbxPgLM6WkY6ppXk5y-IsLIsIpDe57aIuurKicVDDr8r-ZqVhHPzghANT3RTNU1xQ1qu/exec") return;
 
-  // Use JSONP-style approach: create a script tag that calls a callback
-  // Actually, since Apps Script supports CORS on GET for web apps deployed as "Anyone",
-  // we'll try fetch first, fall back to what we have
   fetch(`${SCRIPT_URL}?action=get_all`)
     .then(r => r.json())
     .then(serverData => {
       if (serverData.status === 'ok') {
-        // Merge server data (server wins for conflicts)
-        if (serverData.balint) {
-          Object.keys(serverData.balint).forEach(k => {
-            data.balint[k] = serverData.balint[k];
-          });
-        }
-        if (serverData.magor) {
-          Object.keys(serverData.magor).forEach(k => {
-            data.magor[k] = serverData.magor[k];
-          });
-        }
-        saveLocal();
+        data.balint = serverData.balint || {};
+        data.magor = serverData.magor || {};
         buildCalendars();
         updateScores();
         checkTodayLogged();
       }
     })
     .catch(err => {
-      console.log('Could not fetch from server, using local data', err);
+      console.log('Could not fetch from server:', err);
     });
 }
 
@@ -749,12 +725,14 @@ function pushToServer(who, done) {
     done: done ? 'yes' : 'no'
   });
 
-  // Use iframe for CORS-safe submission (works from file:// and GitHub Pages)
-  const iframe = document.createElement('iframe');
-  iframe.style.display = 'none';
-  iframe.src = `${SCRIPT_URL}?${params.toString()}`;
-  document.body.appendChild(iframe);
-  setTimeout(() => { try { document.body.removeChild(iframe); } catch(e) {} }, 5000);
+  fetch(`${SCRIPT_URL}?${params.toString()}`)
+    .then(r => r.json())
+    .then(result => {
+      console.log('Logged to server:', result);
+    })
+    .catch(err => {
+      console.error('Failed to log to server:', err);
+    });
 }
 
 // ═══════════════ CALENDAR ═══════════════
@@ -883,7 +861,6 @@ function logDay(done) {
   const key = today.getDate().toString();
 
   data[selectedWho][key] = done;
-  saveLocal();
   pushToServer(selectedWho, done);
   buildCalendars();
   updateScores();
