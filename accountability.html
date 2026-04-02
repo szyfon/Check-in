@@ -698,7 +698,7 @@ function init() {
 
 // ═══════════════ DATA ═══════════════
 function fetchFromServer() {
-  if (SCRIPT_URL === "https://script.google.com/macros/s/AKfycbxPgLM6WkY6ppXk5y-IsLIsIpDe57aIuurKicVDDr8r-ZqVhHPzghANT3RTNU1xQ1qu/exec") return;
+  // URL configured
 
   fetch(`${SCRIPT_URL}?action=get_all`)
     .then(r => r.json())
@@ -717,7 +717,7 @@ function fetchFromServer() {
 }
 
 function pushToServer(who, done) {
-  if (SCRIPT_URL === "https://script.google.com/macros/s/AKfycbxPgLM6WkY6ppXk5y-IsLIsIpDe57aIuurKicVDDr8r-ZqVhHPzghANT3RTNU1xQ1qu/exec") return;
+  // URL configured
 
   const params = new URLSearchParams({
     action: 'log',
