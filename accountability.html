@@ -549,6 +549,44 @@
   }
 
   /* ═══ LOADING ═══ */
+  .loading-overlay {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 215, 0, 0.12);
+    border: 1px solid rgba(255, 215, 0, 0.25);
+    backdrop-filter: blur(8px);
+    padding: 10px 24px;
+    border-radius: 100px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 50;
+    transition: opacity 0.4s, transform 0.4s;
+  }
+
+  .loading-overlay.hidden {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+    pointer-events: none;
+  }
+
+  .loading-overlay .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  .loading-overlay .loading-text {
+    font-size: 13px;
+    color: var(--gold);
+    font-weight: 400;
+  }
+
   .loading {
     text-align: center;
     padding: 40px;
@@ -576,6 +614,11 @@
 <body>
 
 <canvas id="confettiCanvas"></canvas>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <span class="loading-text">Syncing with the gods...</span>
+</div>
 
 <div class="celebration" id="celebration">
   <div class="celebration-content">
@@ -700,19 +743,26 @@ function init() {
 function fetchFromServer() {
   // URL configured
 
-  fetch(`${SCRIPT_URL}?action=get_all`)
-    .then(r => r.json())
+  fetch(`${SCRIPT_URL}?action=get_all`, { redirect: 'follow' })
+    .then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
     .then(serverData => {
+      console.log('Server data received:', serverData);
       if (serverData.status === 'ok') {
         data.balint = serverData.balint || {};
         data.magor = serverData.magor || {};
+        console.log('Data applied:', JSON.stringify(data));
         buildCalendars();
         updateScores();
         checkTodayLogged();
       }
+      document.getElementById('loadingOverlay').classList.add('hidden');
     })
     .catch(err => {
       console.log('Could not fetch from server:', err);
+      document.getElementById('loadingOverlay').classList.add('hidden');
     });
 }
 
